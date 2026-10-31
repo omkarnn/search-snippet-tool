@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google SERP Simulator & Snippet Editor</title>
+  <style>
+    :root {
+      --bg-page: #f1f3f5;
+      --card-bg: #ffffff;
+      --border-color: #dee2e6;
+      --text-main: #212529;
+      --text-muted: #6c757d;
+      --primary: #1a73e8;
+      --primary-hover: #1558d6;
+      --good-bg: #d3f9d8;
+      --good-text: #2b8a3e;
+      --warn-bg: #fff3bf;
+      --warn-text: #e67700;
+      --bad-bg: #ffe3e3;
+      --bad-text: #c92a2a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 30px 16px;
+      background-color: var(--bg-page);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    #serp-app-container {
+      width: 100%;
+      max-width: 1100px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    }
+
+    .app-header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid #f1f3f5;
+      padding-bottom: 14px;
+    }
+
+    .app-header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .app-header p {
+      margin: 6px 0 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .serp-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+
+    @media (min-width: 900px) {
+      .serp-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .serp-panel {
+      background: #ffffff;
+      border: 1px solid #edf2f7;
+      border-radius: 10px;
+      padding: 22px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .panel-title {
+      margin: 0 0 18px 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #343a40;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 0.88rem;
+      color: #495057;
+    }
+
+    .input-group input[type="text"], 
+    .input-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: #212529;
+      background: #fff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input-group input[type="text"]:focus, 
+    .input-group textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+      outline: 0;
+    }
+
+    .counter-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      font-size: 0.82rem;
+    }
+
+    .counter-text {
+      color: var(--text-muted);
+    }
+
+    .status-badge {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .status-good { background-color: var(--good-bg); color: var(--good-text); }
+    .status-warning { background-color: var(--warn-bg); color: var(--warn-text); }
+    .status-over { background-color: var(--bad-bg); color: var(--bad-text); }
+
+    /* Preview Section */
+    .preview-toggle-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: #495057;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-btn:hover {
+      background-color: #e9ecef;
+    }
+
+    .toggle-btn.active {
+      background-color: #212529;
+      color: #ffffff;
+      border-color: #212529;
+    }
+
+    #google-preview-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px 20px;
+      min-height: 170px;
+      display: flex;
+      align-items: flex-start;
+      transition: all 0.2s ease;
+    }
+
+    .preview-card {
+      width: 100%;
+      text-align: left;
+    }
+
+    .preview-source {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .preview-favicon {
+      width: 26px;
+      height: 26px;
+      background: #f1f3f4;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #5f6368;
+      flex-shrink: 0;
+    }
+
+    .preview-meta-col {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .preview-site-name {
+      font-size: 14px;
+      color: #202124;
+      line-height: 18px;
+      font-weight: 400;
+    }
+
+    .preview-url-display {
+      font-size: 12px;
+      color: #4d5156;
+      line-height: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .preview-title-text {
+      margin: 2px 0 4px 0;
+      font-weight: 400;
+      font-size: 20px;
+      line-height: 26px;
+      color: #1a0dab;
+      cursor: pointer;
+      word-wrap: break-word;
+    }
+
+    .preview-title-text:hover {
+      text-decoration: underline;
+    }
+
+    .preview-desc-text {
+      margin: 0;
+      font-size: 14px;
+      line-height: 22px;
+      color: #4d5156;
+      word-wrap: break-word;
+    }
+
+    /* Mobile View Toggle Styles */
+    #google-preview-box.mobile-mode {
+      max-width: 375px;
+      margin: 0 auto;
+      border: 1px solid #ced4da;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    #google-preview-box.mobile-mode .preview-title-text {
+      font-size: 18px;
+      line-height: 24px;
+      color: #1558d6;
+    }
+
+    .tips-box {
+      margin-top: 18px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+
+<div id="serp-app-container">
+  <div class="app-header">
+    <h1>Google SERP Simulator &amp; SEO Snippet Editor</h1>
+    <p>Preview how your webpage title, URL breadcrumb, and meta description will display on Google Desktop and Mobile search results.</p>
+  </div>
+
+  <div class="serp-grid">
+    <!-- Inputs Section -->
+    <div class="serp-panel inputs-panel">
+      <h3 class="panel-title">Edit Snippet Details</h3>
+      
+      <div class="input-group">
+        <label for="serp-title">SEO Title</label>
+        <input type="text" id="serp-title" placeholder="e.g., What is Digital Marketing? A Complete Beginner's Guide" value="What is Digital Marketing? A Complete Beginner's Guide">
+        <div class="counter-container">
+          <span class="counter-text"><span id="title-count">0</span> / 60 characters</span>
+          <span id="title-status" class="status-badge status-good">Good</span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="serp-url">Target URL</label>
+        <input type="text" id="serp-url" placeholder="e.g., https://whatisdigitalmarketing.in/guide" value="https://whatisdigitalmarketing.in/guide">
+      </div>
+
+      <div class="input-group">
+        <label for="serp-desc">Meta Description</label>
+        <textarea id="serp-desc" rows="4" placeholder="e.g., Learn the core pillars of digital marketing, including SEO, paid ads, and social media strategy to scale your business growth today.">Learn the core pillars of digital marketing, including SEO, paid ads, and social media strategy to scale your business growth today.</textarea>
+        <div class="counter-container">
+          <span class="counter-text"><span id="desc-count">0</span> / 160 characters</span>
+          <span id="desc-status" class="status-badge status-good">Good</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Previews Section -->
+    <div class="serp-panel preview-panel">
+      <div class="preview-toggle-container">
+        <button id="btn-desktop" class="toggle-btn active" type="button">🖥️ Desktop Preview</button>
+        <button id="btn-mobile" class="toggle-btn" type="button">📱 Mobile Preview</button>
+      </div>
+
+      <!-- Google Mockup Box -->
+      <div id="google-preview-box" class="desktop-mode">
+        <div class="preview-card">
+          <div class="preview-source">
+            <div class="preview-favicon" id="view-icon">W</div>
+            <div class="preview-meta-col">
+              <span class="preview-site-name" id="view-sitename">What Is Digital Marketing</span>
+              <span class="preview-url-display" id="view-url">https://whatisdigitalmarketing.in/guide</span>
+            </div>
+          </div>
+          <h3 class="preview-title-text" id="view-title">What is Digital Marketing? A Complete Beginner's Guide</h3>
+          <p class="preview-desc-text" id="view-desc">Learn the core pillars of digital marketing, including SEO, paid ads, and social media strategy to scale your business growth today.</p>
+        </div>
+      </div>
+
+      <div class="tips-box">
+        💡 <b>Best Practice:</b> Keep titles between 50–60 characters (~580px) and meta descriptions between 120–155 characters to avoid ellipses (...) on search result pages.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const inputTitle = document.getElementById('serp-title');
+  const inputUrl = document.getElementById('serp-url');
+  const inputDesc = document.getElementById('serp-desc');
+
+  const viewTitle = document.getElementById('view-title');
+  const viewUrl = document.getElementById('view-url');
+  const viewDesc = document.getElementById('view-desc');
+  const viewSiteName = document.getElementById('view-sitename');
+  const viewIcon = document.getElementById('view-icon');
+
+  const titleCount = document.getElementById('title-count');
+  const descCount = document.getElementById('desc-count');
+
+  const titleStatus = document.getElementById('title-status');
+  const descStatus = document.getElementById('desc-status');
+
+  const btnDesktop = document.getElementById('btn-desktop');
+  const btnMobile = document.getElementById('btn-mobile');
+  const previewBox = document.getElementById('google-preview-box');
+
+  function deriveSiteName(rawUrl) {
+    try {
+      let urlStr = rawUrl.trim();
+      if (!/^https?:\/\//i.test(urlStr)) {
+        urlStr = 'https://' + urlStr;
+      }
+      const host = new URL(urlStr).hostname.replace(/^www\./, '');
+      const parts = host.split('.');
+      if (parts[0]) {
+        return parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+      }
+      return 'Example Site';
+    } catch (e) {
+      return 'Your Website';
+    }
+  }
+
+  function updatePreview() {
+    const rawTitle = inputTitle.value.trim();
+    const rawUrl = inputUrl.value.trim();
+    const rawDesc = inputDesc.value.trim();
+
+    // Text counters
+    titleCount.textContent = inputTitle.value.length;
+    descCount.textContent = inputDesc.value.length;
+
+    // Content Display
+    viewTitle.textContent = rawTitle || 'Please enter an SEO title...';
+    viewUrl.textContent = rawUrl || 'https://example.com/your-page';
+    viewDesc.textContent = rawDesc || 'Please enter a meta description to see how it appears in search results...';
+
+    // Auto-update Site Name & Icon
+    const siteName = deriveSiteName(rawUrl);
+    viewSiteName.textContent = siteName;
+    viewIcon.textContent = siteName.charAt(0).toUpperCase() || '🌐';
+
+    // Title Status Badge
+    const tLen = inputTitle.value.length;
+    if (tLen === 0) {
+      titleStatus.className = 'status-badge status-over';
+      titleStatus.textContent = 'Empty';
+    } else if (tLen < 30) {
+      titleStatus.className = 'status-badge status-warning';
+      titleStatus.textContent = 'Too Short';
+    } else if (tLen <= 60) {
+      titleStatus.className = 'status-badge status-good';
+      titleStatus.textContent = 'Optimal';
+    } else {
+      titleStatus.className = 'status-badge status-warning';
+      titleStatus.textContent = 'Truncated';
+    }
+
+    // Meta Description Status Badge
+    const dLen = inputDesc.value.length;
+    if (dLen === 0) {
+      descStatus.className = 'status-badge status-over';
+      descStatus.textContent = 'Empty';
+    } else if (dLen < 70) {
+      descStatus.className = 'status-badge status-warning';
+      descStatus.textContent = 'Too Short';
+    } else if (dLen <= 160) {
+      descStatus.className = 'status-badge status-good';
+      descStatus.textContent = 'Optimal';
+    } else {
+      descStatus.className = 'status-badge status-warning';
+      descStatus.textContent = 'Truncated';
+    }
+  }
+
+  // Device Toggle Handlers
+  btnDesktop.addEventListener('click', () => {
+    btnDesktop.classList.add('active');
+    btnMobile.classList.remove('active');
+    previewBox.className = 'desktop-mode';
+  });
+
+  btnMobile.addEventListener('click', () => {
+    btnMobile.classList.add('active');
+    btnDesktop.classList.remove('active');
+    previewBox.className = 'mobile-mode';
+  });
+
+  // Keystroke Listeners
+  inputTitle.addEventListener('input', updatePreview);
+  inputUrl.addEventListener('input', updatePreview);
+  inputDesc.addEventListener('input', updatePreview);
+
+  // Initial render
+  updatePreview();
+})();
+</script>
+</body>
+</html>
